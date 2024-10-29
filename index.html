@@ -38,7 +38,7 @@
                 // GeoJSON 레이어 추가
                 L.geoJSON(data, {
                     style: function (feature) {
-                        return {color: '#0099ff', weight: 2, fillOpacity: 0.5}; // 스타일 설정
+                        return {color: '#395daf', weight: 2, fillOpacity: 0.5}; // 스타일 설정
                     },
                     onEachFeature: function (feature, layer) {
                         layer.bindPopup(feature.properties.name); // 팝업 추가 (속성에 따라)
