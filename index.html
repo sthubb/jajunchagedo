@@ -3,33 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenStreetMap 테스트</title>
-
-    <!-- Leaflet CSS (HTTPS 사용) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    
-    <!-- Leaflet JavaScript (HTTPS 사용) -->
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    
+    <title>카카오 지도 - GeoJSON 하이라이트 및 검색 서비스</title>
+    <!-- 카카오 지도 API 스크립트 (YOUR_API_KEY 부분에 JavaScript 키 입력) -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=20c8cb16a4f1295cb5e6cbb9389ba9e6&libraries=services"></script>
     <style>
+        /* 지도 크기 스타일 설정 */
         #map {
-            height: 600px;
             width: 100%;
+            height: 600px;
+        }
+        /* 검색 입력창 스타일 */
+        #searchContainer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 2;
+            background: white;
+            padding: 5px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
     </style>
 </head>
 <body>
     <div id="map"></div>
-
+    <div id="searchContainer">
+        <input type="text" id="keyword" placeholder="검색어를 입력하세요">
+        <button onclick="searchPlaces()">검색</button>
+    </div>
     <script>
         // 지도 초기화
-        var map = L.map('map').setView([35.1796, 129.0756], 13); // 부산 좌표
+        const container = document.getElementById('map');
+        const options = {
+            center: new kakao.maps.LatLng(35.1496, 129.0756), // 부산 위치
+            level: 8
+        };
+        const map = new kakao.maps.Map(container, options);
 
-        // OpenStreetMap 타일 레이어 추가 (HTTPS 사용)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        // 장소 검색 서비스 객체 생성
+        const ps = new kakao.maps.services.Places();
+        
+        // GeoJSON 데이터 불러와서 지도에 추가
+        fetch('https://gist.githubusercontent.com/sthubb/bd6cb173135e92d06c70b12f1a19c831/raw/e1e5651d776d9b69d84d30dadd65378c7c7a6aaa/mydata.geojson')
+            .then(response => response.json())
+            .then(data => {
+                // GeoJSON 데이터를 카카오 지도에 추가
+                data.features.forEach(feature => {
+                    const coords = feature.geometry.coordinates;
+                    const type = feature.geometry.type;
+
+                    if (type === "Point") {
+                        // 포인트(마커) 생성
+                        const markerPosition = new kakao.maps.LatLng(coords[1], coords[0]);
+                        const marker = new kakao.maps.Marker({
+                            position: markerPosition
+                        });
+                        marker.setMap(map);
+
+                    } else if (type === "Polygon") {
+                        // 폴리곤(다각형) 생성
+                        const path = coords[0].map(coord => new kakao.maps.LatLng(coord[1], coord[0]));
+                        const polygon = new kakao.maps.Polygon({
+                            path: path,
+                            strokeWeight: 3,
+                            strokeColor: '#3399FF',  // 연한 파란색 외곽선
+                            fillColor: '#3399FF',    // 연한 파란색 채우기
+                            fillOpacity: 0.3
+                        });
+                        polygon.setMap(map);
+                    }
+                });
+            })
+            .catch(error => console.error("GeoJSON 데이터를 로드할 수 없습니다:", error));
+
+        // 장소 검색 함수
+        function searchPlaces() {
+            const keyword = document.getElementById('keyword').value;
+
+            if (!keyword.trim()) {
+                alert('검색어를 입력해주세요!');
+                return;
+            }
+
+            ps.keywordSearch(keyword, placesSearchCB); 
+        }
+
+        // 장소 검색 콜백 함수
+        function placesSearchCB(data, status, pagination) {
+            if (status === kakao.maps.services.Status.OK) {
+                // 검색 결과 위치로 지도 이동 및 마커 표시
+                data.forEach(place => {
+                    const coords = new kakao.maps.LatLng(place.y, place.x);
+                    const marker = new kakao.maps.Marker({
+                        position: coords
+                    });
+                    marker.setMap(map);
+                });
+                map.setCenter(new kakao.maps.LatLng(data[0].y, data[0].x));
+            } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
+                alert('검색 결과가 없습니다.');
+            } else if (status === kakao.maps.services.Status.ERROR) {
+                alert('검색 중 오류가 발생했습니다.');
+            }
+        }
     </script>
 </body>
 </html>
