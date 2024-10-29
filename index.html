@@ -30,6 +30,22 @@
             maxZoom: 19,
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
+
+        // GeoJSON 데이터 로드
+        fetch('https://gist.githubusercontent.com/sthubb/bd6cb173135e92d06c70b12f1a19c831/raw/e1e5651d776d9b69d84d30dadd65378c7c7a6aaa/mydata.geojson') // GeoJSON 파일의 URL
+            .then(response => response.json())
+            .then(data => {
+                // GeoJSON 레이어 추가
+                L.geoJSON(data, {
+                    style: function (feature) {
+                        return {color: 'blue', weight: 2, fillOpacity: 0.5}; // 스타일 설정
+                    },
+                    onEachFeature: function (feature, layer) {
+                        layer.bindPopup(feature.properties.name); // 팝업 추가 (속성에 따라)
+                    }
+                }).addTo(map);
+            })
+            .catch(error => console.error('Error loading GeoJSON:', error));
     </script>
 </body>
 </html>
