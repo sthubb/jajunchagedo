@@ -23,7 +23,7 @@
 
     <script>
         // 지도 초기화
-        var map = L.map('map').setView([35.1796, 129.0756], 13); // 부산 좌표
+        var map = L.map('map').setView([35.1596, 129.0756], 12); // 부산 좌표
 
         // OpenStreetMap 타일 레이어 추가 (HTTPS 사용)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -38,7 +38,7 @@
                 // GeoJSON 레이어 추가
                 L.geoJSON(data, {
                     style: function (feature) {
-                        return {color: 'blue', weight: 2, fillOpacity: 0.5}; // 스타일 설정
+                        return {color: '#395daf', weight: 2, fillOpacity: 0.5}; // 스타일 설정
                     },
                     onEachFeature: function (feature, layer) {
                         layer.bindPopup(feature.properties.name); // 팝업 추가 (속성에 따라)
